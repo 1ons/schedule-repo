@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+        <div class="flex items-center">
+            <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+            <span class="text-xl font-bold">Schedule</span>
+        </div>
+    </header>
+    
+    <main class="pt-20 px-6 flex-grow container mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-6">Результаты SQL-запроса</h1>
+        
+        {% if result %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left border-collapse border border-gray-700">
+                <thead>
+                    <tr class="bg-gray-800">
+                        {% for column in result[0].keys() %}
+                        <th class="border border-gray-700 px-4 py-2">{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in result %}
+                    <tr class="hover:bg-gray-700 transition">
+                        {% for value in row.values() %}
+                        <td class="border border-gray-700 px-4 py-2">{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-gray-400">Нет результатов или же пустое значение.</p>
+        {% endif %}
+    </main>
+    
+  <footer class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div>
+        &copy; 2024. Schedule
+      </div>
+      <div class="text-right">
+        <div class="font-medium mb-1 px-16">Остались вопросы?</div>
+        <div class="text-gray-300 px-16">GDevs@gmail.com</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

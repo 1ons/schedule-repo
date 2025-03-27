@@ -1,0 +1,137 @@
+/* Общие стили для таблицы */
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    background-color: #1f2937;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+thead {
+    background-color: #374151;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #374151;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #2d3748;
+}
+
+tbody tr:hover {
+    background-color: #4a5568;
+}
+
+/* Кнопки */
+button {
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #2563eb;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+button:active {
+    background-color: #1e40af;
+    transform: translateY(0);
+}
+
+/* Удалить кнопку (красная) */
+button[type="submit"]:nth-child(2) {
+    background-color: #ef4444;
+}
+
+button[type="submit"]:nth-child(2):hover {
+    background-color: #dc2626;
+}
+
+button[type="submit"]:nth-child(2):active {
+    background-color: #b91c1c;
+}
+
+/* Селектор ролей */
+select {
+    padding: 8px;
+    font-size: 14px;
+    background-color: #2d3748;
+    color: #ffffff;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    outline: none;
+    margin-right: 8px;
+    transition: border-color 0.3s ease;
+}
+
+select:focus {
+    border-color: #2563eb;
+}
+#notifications-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999; /* Поверх всех элементов */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .notification {
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: white;
+    font-size: 16px;
+    animation: fade-in-out 4s ease-in-out;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .notification.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .notification.success {
+    background-color: #38a169; /* Зеленый */
+  }
+  
+  .notification.error {
+    background-color: #e53e3e; /* Красный */
+  }
+  
+  .notification.info {
+    background-color: #3182ce; /* Синий */
+  }
+  
+  @keyframes fade-in-out {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    10%, 90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+  

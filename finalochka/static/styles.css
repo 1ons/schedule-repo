@@ -1,0 +1,339 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 18px;
+  scroll-behavior: smooth;
+}
+.hidden {
+  display: none;
+}
+.knopka {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+.hero-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.navbar {
+  @apply bg-gray-800 text-white shadow-md fixed top-0 left-0 w-full z-50;
+}
+
+.navbar nav {
+  @apply container mx-auto px-4 py-3 flex items-center justify-between;
+}
+
+.navbar nav a {
+  @apply text-gray-300 font-medium transition duration-300 ease-in-out 
+         hover:text-white hover:bg-gray-700 
+         px-3 py-2 rounded-md text-sm 
+         mx-1 no-underline;
+}
+
+.navbar nav a:hover {
+  @apply bg-gray-700 text-white;
+}
+.navbar nav a.active {
+  @apply bg-gray-900 text-white;
+}
+@media (max-width: 768px) {
+.navbar nav {
+  @apply flex-col items-stretch;
+}
+
+.navbar nav a {
+  @apply block text-center mb-2;
+ }
+}
+.navbar nav a[href*="login"] {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+
+
+h1 {
+  font-size: 3rem;
+  color: white;
+}
+
+p {
+  font-size: 1.2rem;
+  color: white;
+}
+
+a {
+  margin-top: 20px;
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 10px 20px;
+  color: white;
+  border-radius: 5px;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+
+@keyframes typing {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  
+@keyframes blink {
+    50% {
+      border-color: transparent;
+    }
+  }
+  
+  @keyframes erase {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0;
+    }
+  }
+  
+  .dynamic-text {
+    display: inline-block;
+    border-right: 2px solid white;
+    white-space: nowrap;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    width: 0;
+    animation: typing 3s steps(30, end), blink 0.6s step-end infinite, erase 10s steps(30, end) 3s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1, infinite, 1;
+  }
+
+  header {
+    position: fixed; /* Фиксируем navbar сверху */
+    width: 100%; /* Растягиваем на всю ширину */
+    top: 0; /* Закрепляем в верхней части */
+    z-index: 1000; /* Ставим поверх всего контента */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Легкая тень */
+  }
+  
+  nav a {
+    color: white; /* Белый цвет текста */
+    text-decoration: none; /* Убираем подчеркивание ссылок */
+    font-weight: 500; /* Полужирный текст */
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  
+  nav a:hover {
+    background-color: #4A5568; /* Темно-серый цвет при наведении */
+    border-radius: 8px; /* Округлые края */
+  }
+  #notifications-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999; /* Поверх всех элементов */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .notification {
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: white;
+    font-size: 16px;
+    animation: fade-in-out 4s ease-in-out;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .notification.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .notification.success {
+    background-color: #38a169; 
+  }
+  
+  .notification.error {
+    background-color: #e53e3e; 
+  }
+  
+  .notification.info {
+    background-color: #3182ce; 
+  }
+  
+  @keyframes fade-in-out {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    10%, 90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table th, table td {
+  text-align: left;
+  vertical-align: middle;
+  padding: 0.5rem;
+}
+
+table th {
+  background-color: #2d3748;
+  font-weight: bold;
+}
+
+table td {
+  border: 1px solid #4a5568; 
+}
+
+table th:nth-child(1),
+table td:nth-child(1) {
+  width: 40%; 
+}
+
+table th:nth-child(2),
+table td:nth-child(2),
+table th:nth-child(3),
+table td:nth-child(3) {
+  width: 20%; 
+}
+
+table th:nth-child(4),
+table td:nth-child(4) {
+  width: 20%; 
+}
+.text-gray-400 {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+#tg-bot-block {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #2d3748;
+  border-radius: 5px 0 0 5px;
+  box-shadow: 0 0 10px #039be5;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+  transition: transform 0.3s ease-in-out;
+}
+
+#tg-bot-block.hidden {
+  transform: translateY(150%);
+}
+
+#tg-bot-block h3 {
+  color: #039be5;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.2;
+  margin-bottom: 5px;
+}
+
+#tg-bot-block a {
+  display: block;
+  width: 80px;
+  height: 80px;
+  background-color: #2d3748;
+  border-radius: 5px;
+}
+
+#tg-bot-block img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+.news-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.news-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #1f2937;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.verification-input {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.verification-input input {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+button {
+  position: relative;
+  background-color: rgba(59, 130, 246);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.lefter{
+  left: 10px;
+  width: 200px;
+}
+button:hover {
+  background-color: #0872c4;
+}

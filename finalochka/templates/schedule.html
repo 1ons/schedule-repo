@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule - Расписание</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+  <!-- Навигационная панель -->
+  <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+    <div class="flex items-center">
+      <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-xl font-bold">Schedule</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}" >Главная</a>
+      <a href="{{ url_for('profile') }}">Профиль</a>
+      <a href="{{ url_for('schedule') }}">Расписание</a>
+      <a href="{{ url_for('news') }}">Новости</a>
+      <a href="{{ url_for('about') }}">О нас</a>
+    </nav>
+  </header>
+  <!-- Основная часть -->
+  <main class="pt-20 px-6 flex-grow container mx-auto">
+    <h1 class="text-3xl font-bold text-center mt-8 mb-6">Расписание занятий</h1>
+    <!-- Проверка роли администратора -->
+    {% if session.role == 'admin' %}
+      <!-- Модальное окно -->
+      <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <h2 class="text-2xl font-bold text-center mb-4">Редактировать расписание</h2>
+          <form id="edit-schedule-form" method="post">
+            <input type="hidden" id="edit-schedule-id" name="schedule_id">
+            <div class="grid grid-cols-1 gap-4">
+              <select id="edit-group" name="group" class="bg-gray-700 text-white px-4 py-2 rounded">
+                <option value="">Выберите группу</option>
+                {% for group_number in ['2301', '2302', '2303', '2304', '2305', '2306', '2307', '2308', '2309', '2310'] %}
+                <option value="{{ group_number }}">{{ group_number }}</option>
+                {% endfor %}
+              </select>
+              <select id="edit-day" name="day" class="bg-gray-700 text-white px-4 py-2 rounded">
+                <option value="">Выберите день</option>
+                <option value="Понедельник">Понедельник</option>
+                <option value="Вторник">Вторник</option>
+                <option value="Среда">Среда</option>
+                <option value="Четверг">Четверг</option>
+                <option value="Пятница">Пятница</option>
+              </select>
+              <input type="text" id="edit-subject" name="subject" class="bg-gray-700 text-white px-4 py-2 rounded" placeholder="Предмет">
+              <input type="time" id="edit-start-time" name="start_time" class="bg-gray-700 text-white px-4 py-2 rounded">
+              <input type="time" id="edit-end-time" name="end_time" class="bg-gray-700 text-white px-4 py-2 rounded">
+            </div>
+            <div class="text-center mt-4">
+              <button type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded transition" onclick="closeEditModal()">Отмена</button>
+              <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded transition">Сохранить</button>
+            </div>
+          </form>
+        </div>
+      </div>      
+      <!-- Расписание администратора -->
+      <div id="schedule-container" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse border border-gray-700">
+          <thead>
+            <tr class="bg-gray-800">
+              <th class="border border-gray-700 px-4 py-2">Группа</th>
+              <th class="border border-gray-700 px-4 py-2">День недели</th>
+              <th class="border border-gray-700 px-4 py-2">Предмет</th>
+              <th class="border border-gray-700 px-4 py-2">Начало</th>
+              <th class="border border-gray-700 px-4 py-2">Конец</th>
+              <th class="border border-gray-700 px-4 py-2 text-right">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for day, records in grouped_schedule.items() %}
+              {% for record in records %}
+                <tr class="hover:bg-gray-700 transition">
+                  <td class="border border-gray-700 px-4 py-2">{{ record.group_number }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ day|capitalize }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ record.subject }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ record.start_time }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ record.end_time }}</td>
+                  <td class="border border-gray-700 px-4 py-2 text-right">
+                    <!-- Кнопка "Редактировать" -->
+                    <button 
+                      type="button" 
+                      style="position: relative; top: -5px;"
+                      onclick="openEditModal({{ record.id }}, '{{ record.group_number }}', '{{ record.day }}', '{{ record.subject }}', '{{ record.start_time }}', '{{ record.end_time }}')">
+                      Редактировать
+                    </button>
+                    <!-- Кнопка "Удалить" -->
+                    <form action="{{ url_for('delete_schedule', schedule_id=record.id) }}" method="post" class="inline-block ml-2">
+                      <button type="submit" style="background-color: red; position: relative; top: 5px; width: 100px;">Удалить</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Кнопка показа/скрытия архива -->
+      <div class="text-left mb-4">
+        <button id="toggle-archive" class="button" style="position: relative; top: 10px;">
+          Показать архив
+        </button>
+      </div>
+      <!-- Архив расписания -->
+      <div id="archive-container" class="hidden overflow-x-auto">
+        <h2 class="text-2xl font-bold text-center mb-4">Архив расписаний</h2>
+        {% if archive_data %}
+        <table class="w-full text-left border-collapse border border-gray-700">
+          <thead>
+            <tr class="bg-gray-800">
+              <th class="border border-gray-700 px-4 py-2">Группа</th>
+              <th class="border border-gray-700 px-4 py-2">День недели</th>
+              <th class="border border-gray-700 px-4 py-2">Предмет</th>
+              <th class="border border-gray-700 px-4 py-2">Начало</th>
+              <th class="border border-gray-700 px-4 py-2">Конец</th>
+              <th class="border border-gray-700 px-4 py-2 text-right">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in archive_data %}
+            <tr class="hover:bg-gray-700 transition">
+              <td class="border border-gray-700 px-4 py-2">{{ record.group_number }}</td>
+              <td class="border border-gray-700 px-4 py-2">{{ record.day|capitalize }}</td>
+              <td class="border border-gray-700 px-4 py-2">{{ record.subject }}</td>
+              <td class="border border-gray-700 px-4 py-2">{{ record.start_time }}</td>
+              <td class="border border-gray-700 px-4 py-2">{{ record.end_time }}</td>
+              <td class="border border-gray-700 px-4 py-2 text-right">
+                <!-- Кнопка для восстановления -->
+                <form action="{{ url_for('restore_schedule', archive_id=record.id) }}" method="post" class="inline-block">
+                  <button type="submit" style="background-color: rgb(30, 177, 20); position: relative; top: -5px;">
+                    Восстановить
+                  </button>
+                </form>
+                <!-- Кнопка для удаления -->
+                <form action="{{ url_for('delete_forever', archive_id=record.id) }}" method="post" class="inline-block ml-2">
+                  <button type="submit" 
+                          style="background-color: red; position: relative; top: 5px; width: 100px;"
+                          onclick="return confirm('Вы уверены? Удаление из архива будет безвозвратным.')">
+                    Удалить
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-center text-gray-400">В архиве нет записей.</p>
+        {% endif %}
+      </div>
+      <!-- Кнопка для открытия формы -->
+      <div class="text-left mb-4">
+        <button id="toggle-tools" style = 'position: relative; top: 5px;'>
+          Специальные инструменты 🛠
+        </button>
+      </div>
+
+      <!-- Форма для ввода SQL-запроса (скрыта по умолчанию) -->
+      <div id="tools-container" class="hidden p-6 bg-gray-800 rounded-lg shadow-md" style="position: relative; bottom: 10px;">
+        <h2 class="text-2xl font-bold text-center mb-4">Выполнить SQL-запрос</h2>
+        <form id="sql-form" action="{{ url_for('execute_sql') }}" method="post">
+          <textarea name="sql_query" id="sql-query" rows="4" class="w-full bg-gray-700 text-white p-4 rounded mb-4" placeholder="Введите SQL-запрос"></textarea>
+          <div class="text-center">
+              <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition duration-300">
+                  Выполнить запрос
+              </button>
+          </div>
+        </form>
+        <div id="query-result" class="mt-4 text-white"></div>
+      </div>
+
+      <!-- Инициализация и добавление -->
+      <form action="{{ url_for('init_schedule_route') }}" method="post" class="mb-4">
+        <button type="submit" 
+                onclick="return confirm('Вы уверены? Это действие перезапишет все существующее расписание.')">
+          Сбросить все изменения расписания
+        </button>
+      </form>
+      <form action="{{ url_for('add_schedule') }}" method="post" class="mt-6 bg-gray-800 p-6 rounded-lg shadow-md" style="position: relative; top: 50px;">
+        <h2 class="text-2xl font-bold mb-4 text-center">Добавить расписание</h2>
+        <!-- Форма добавления расписания -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <select name="group_number" required class="bg-gray-700 text-white px-4 py-2 rounded">
+            <option value="">Выберите группу</option>
+            {% for group_number in ['2301', '2302', '2303', '2304', '2305', '2306', '2307', '2308', '2309', '2310'] %}
+            <option value="{{ group_number }}">{{ group_number }}</option>
+            {% endfor %}
+          </select>
+          <select name="day" required class="bg-gray-700 text-white px-4 py-2 rounded">
+            <option value="">Выберите день</option>
+            <option value="Понедельник">Понедельник</option>
+            <option value="Вторник">Вторник</option>
+            <option value="Среда">Среда</option>
+            <option value="Четверг">Четверг</option>
+            <option value="Пятница">Пятница</option>
+          </select>
+          <input type="text" name="subject" placeholder="Предмет" required class="bg-gray-700 text-white px-4 py-2 rounded">
+          <input type="time" name="start_time" required class="bg-gray-700 text-white px-4 py-2 rounded">
+          <input type="time" name="end_time" required class="bg-gray-700 text-white px-4 py-2 rounded">
+        </div>
+        <div class="text-center mt-4">
+          <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded transition duration-300">
+            Добавить
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <!-- Расписание для пользователя -->
+      {% for day, records in grouped_schedule.items() %}
+        <h2 class="text-2xl font-bold text-left mb-4">{{ day|capitalize }}</h2>
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-left border-collapse border border-gray-700">
+            <thead>
+              <tr class="bg-gray-800">
+                <th class="border border-gray-700 px-4 py-2">Предмет</th>
+                <th class="border border-gray-700 px-4 py-2">Начало</th>
+                <th class="border border-gray-700 px-4 py-2">Конец</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+                <tr class="hover:bg-gray-700 transition">
+                  <td class="border border-gray-700 px-4 py-2">{{ record.subject }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ record.start_time }}</td>
+                  <td class="border border-gray-700 px-4 py-2">{{ record.end_time }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </main>  
+  <div id="notifications"></div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    function openEditModal(id, group, day, subject, startTime, endTime) {
+      $('#edit-schedule-id').val(id);
+      $('#edit-group').val(group);
+      $('#edit-day').val(day);
+      $('#edit-subject').val(subject);
+      $('#edit-start-time').val(startTime);
+      $('#edit-end-time').val(endTime);
+      $('#edit-modal').removeClass('hidden');
+    }
+  
+    function closeEditModal() {
+      $('#edit-modal').addClass('hidden');
+    }
+  
+    // Обработка формы редактирования
+    $('#edit-schedule-form').on('submit', function(event) {
+      event.preventDefault();
+      const formData = $(this).serialize();
+      $.ajax({
+        url: `/edit_schedule/${$('#edit-schedule-id').val()}`,
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+          showNotification('Расписание успешно обновлено', 'success');
+          location.reload();
+        },
+        error: function(xhr) {
+          showNotification('Ошибка при обновлении расписания', 'error');
+        }
+      });
+    });
+  </script>  
+  <script>
+    // Функция для отображения уведомлений
+    function showNotification(message, category) {
+        const notification = $('<div>')
+            .addClass('notification ' + category)
+            .text(message);
+        $('#notifications').append(notification);
+        setTimeout(() => {
+            notification.fadeOut(300, function() { $(this).remove(); });
+        }, 5000);
+    }
+    // Функция получения расписания для группы
+    function fetchScheduleForGroup(group_number) {
+        $.ajax({
+            url: '/get_group_schedule',
+            method: 'POST',
+            data: { group_number: group_number },
+            success: function(data) {
+                const scheduleBody = $('#schedule-body');
+                scheduleBody.empty();
+                
+                if (data.length === 0) {
+                    scheduleBody.append(`
+                        <tr>
+                            <td colspan="5" class="text-center py-4 border border-gray-700">
+                                Расписание для выбранной группы отсутствует
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    data.forEach(function(item) {
+                        const row = `
+                            <tr class="hover:bg-gray-700 transition">
+                                <td class="border border-gray-700 px-4 py-2">${item.day}</td>
+                                <td class="border border-gray-700 px-4 py-2">${item.subject}</td>
+                                <td class="border border-gray-700 px-4 py-2">${item.start_time}</td>
+                                <td class="border border-gray-700 px-4 py-2">${item.end_time}</td>
+                                ${item.actions || ''}
+                            </tr>
+                        `;
+                        scheduleBody.append(row);
+                    });
+                }
+                $('#schedule-container').removeClass('hidden');
+            },
+            error: function() {
+                showNotification('Не удалось загрузить расписание', 'error');
+                $('#schedule-container').addClass('hidden');
+            }
+        });
+    }
+    // Инициализация при загрузке страницы
+    $(document).ready(function() {
+        // Обработчик изменения группы
+        $('#group-selector').on('change', function() {
+            const selectedGroup = $(this).val();
+            if (selectedGroup) {
+                fetchScheduleForGroup(selectedGroup);
+            } else {
+                $('#schedule-container').addClass('hidden');
+            }
+        });
+    
+        // Периодическая проверка уведомлений
+        function checkNotifications() {
+            $.getJSON('/get_notifications', function(data) {
+                data.forEach(function(notification) {
+                    showNotification(notification.message, notification.category);
+                });
+            });
+        }
+    
+        // Первоначальная проверка уведомлений и установка интервала
+        checkNotifications();
+        setInterval(checkNotifications, 5000);
+    });
+    </script>
+  <!-- Скрипты -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $("#toggle-archive").click(function() {
+        $("#archive-container").toggleClass("hidden");
+        if ($("#archive-container").hasClass("hidden")) {
+          $(this).text("Показать архив");
+        } else {
+          $(this).text("Скрыть архив");
+        }
+      });
+    });
+  </script>
+  <script>
+    $(document).ready(function() {
+      $("#toggle-tools").click(function() {
+        $("#tools-container").toggleClass("hidden");
+        if ($("#tools-container").hasClass("hidden")) {
+          $(this).text("Специальные инструменты");
+        } else {
+          $(this).text("Скрыть инструменты");
+        }
+      });
+    });
+  </script>
+  <!-- Футер -->
+  <footer class="bg-gray-800 text-white py-4" style = 'position: relative; top: 150px;'>
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div>
+        &copy; 2024. Schedule
+      </div>
+      <div class="text-right">
+        <div class="font-medium mb-1 px-16">Остались вопросы?</div>
+        <div class="text-gray-300 px-16">GDevs@gmail.com</div>
+      </div>
+    </div>
+  </footer>
+<div id="notifications"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+<div id="notifications-container"></div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Новости - PromoTest</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+  <!-- Хедер -->
+  <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+    <div class="flex items-center">
+      <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-xl font-bold">Schedule</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Главная</a>
+      <a href="{{ url_for('profile') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Профиль</a>
+      <a href="{{ url_for('schedule') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Расписание</a>
+      <a href="{{ url_for('news') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Новости</a>
+      <a href="{{ url_for('about') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">О нас</a>
+    </nav>
+  </header>
+  <!-- Основной контент -->
+  <main class="container mx-auto px-4 pt-24 pb-8">
+    <h1 class="text-4xl md:text-6xl font-bold mb-12 text-center">Новости</h1>
+    <!-- Панель администратора -->
+    {% if session.get('role') == 'admin' %}
+    <div class="flex justify-center mb-12">
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Добавить новость</h2>
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('news') }}">
+          <div class="mb-4">
+            <label for="title" class="block text-sm font-medium mb-2">Заголовок</label>
+            <input type="text" id="title" name="title" class="bg-gray-700 text-white p-2 rounded w-full" required>
+          </div>
+          <div class="mb-4">
+            <label for="content" class="block text-sm font-medium mb-2">Содержание</label>
+            <textarea id="content" name="content" rows="5" class="bg-gray-700 text-white p-2 rounded w-full" required></textarea>
+          </div>
+          <div class="mb-4">
+            <label for="image" class="block text-sm font-medium mb-2">Изображение</label>
+            <input type="file" id="image" name="image" class="bg-gray-700 text-white p-2 rounded">
+          </div>
+          <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full">Добавить</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <!-- Список новостей -->
+    {% if news_list %}
+    <section>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for news in news_list %}
+        <div class="news-card bg-gray-800 rounded-lg overflow-hidden shadow-lg relative">
+          {% if news.image %}
+            <img src="{{ url_for('static', filename='news_images/' + news.image) }}" alt="Изображение новости" class="w-full h-48 object-cover">
+          {% else %}
+            <p class="text-gray-400 text-center">Изображение отсутствует</p>
+          {% endif %}
+          <div class="p-6">
+            <h2 class="text-2xl font-semibold mb-3">{{ news.title }}</h2>
+            <p class="text-gray-300 mb-4">{{ news.content[:150] }}{% if news.content|length > 150 %}...{% endif %}</p>
+              <p class="text-gray-400 mb-4 text-sm">
+              Дата публикации: {{ news.formatted_date }}
+            </p>
+            <a href="{{ url_for('news_detail', news_id=news.id) }}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Подробнее</a>
+              {% if session.get('role') == 'admin' %}
+            <button 
+              class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded absolute top-4 right-4 delete-news" 
+              data-id="{{ news.id }}">
+              Удалить
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% else %}
+    <p class="text-center text-gray-300">Новостей пока нет. Следите за обновлениями!</p>
+    {% endif %}
+  </main>
+  <!-- JavaScript для удаления новости -->
+  <script>
+    $(document).ready(function() {
+      $('.delete-news').on('click', function() {
+        const newsId = $(this).data('id');
+        const confirmed = confirm('Вы уверены, что хотите удалить эту новость?');
+        if (confirmed) {
+          $.ajax({
+            url: `/delete_news/${newsId}`,
+            type: 'POST',
+            success: function(response) {
+              if (response.success) {
+                alert(response.message);
+                location.reload();
+              } else {
+                alert('Ошибка: ' + response.message);
+              }
+            },
+            error: function() {
+              alert('Произошла ошибка при удалении новости.');
+            }
+          });
+        }
+      });
+    });
+  </script>
+  <!-- Футер -->
+  <footer class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div>
+        &copy; 2024. Schedule
+      </div>
+      <div class="text-right">
+        <div class="font-medium mb-1 px-16">Остались вопросы?</div>
+        <div class="text-gray-300 px-16">GDevs@gmail.com</div>
+      </div>
+    </div>
+  </footer>
+<div id="notifications"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+<div id="notifications-container"></div>
+</body>
+</html>

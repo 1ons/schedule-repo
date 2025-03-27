@@ -1,0 +1,339 @@
+----------------------------------------------------------------------------------------------
+drop table schedule2301;
+drop table schedule2302;
+drop table schedule2303;
+drop table schedule2304;
+drop table schedule2305;
+drop table schedule2306;
+drop table schedule2307;
+drop table schedule2308;                                 
+drop table schedule2309;
+drop table schedule2310;
+
+drop table subjects cascade;                           --удаление таблиц
+drop table teachers cascade;
+drop table teacher_subject cascade;
+
+drop table users;
+
+drop table subscribers;
+
+drop table group_subscribers;
+
+drop table schedule;
+drop table schedule_archive;
+----------------------------------------------------------------------------------------------
+--таблица с данными пользователей
+create table users ( 
+user_id serial primary key, 
+username text, 
+password varchar(255), 
+email varchar(255), 
+grup varchar(255)check (grup in ('2301', '2302', '2303', '2304', '2305', '2306', '2307', '2308', '2309', '2310')), 
+role varchar(20) not null check (role in ('admin', 'customer')),
+created_at timestamp default current_timestamp,
+avatar varchar(255)
+); 
+--вывод информаций о пользователе
+select * from users;
+
+--таблица с видами предметов
+create table subjects(
+subject_id int primary key,
+subject_name text);
+
+insert into subjects(subject_id,subject_name)
+values 
+(1,'database'),
+(2,'python'),
+(3,'chemistry'),
+(4,'history'),
+(5,'information communication technology'),
+(6,'physical education'),
+(7,'english'),
+(8,'economy');
+
+select * from subjects;
+
+--таблица с преподами
+create table teachers(
+teacher_id int primary key,
+teacher_name text);
+
+insert into teachers(teacher_id, teacher_name)
+values
+(1,'Хабиев Жангирхан Кайратович'),
+(2,'Ауезханов Дархан Азаматович'),
+(3,'Дина Рукалиевна'),
+(4,'Мадияр Шакиев'),
+(5,'Жұмағамбетова Әсел Кұсманқызы'),
+(6,'Әшімбекова Арайлым Миллионбекқызы'),
+(7,'Кулжанбекова Сара Токтаровна'),
+(8,'Акубаева Багдат Аскановна');
+
+--преподы и предметы которые они преподают (соедененные с приведущеми таблицами по id)
+create table teacher_subject(
+teacher_id int,
+subject_id int,
+primary key (teacher_id, subject_id),
+foreign key (teacher_id) references teachers(teacher_id),
+foreign key (subject_id) references subjects(subject_id));
+
+insert into teacher_subject(teacher_id, subject_id)
+values
+(1,1),
+(2,2),
+(3,3),
+(4,4),
+(5,5), 
+(6,6),
+(7,7),
+(8,8);
+
+--созданние таблицы расписания 
+create table schedule (
+    id serial primary key,
+    group_number varchar(10) not null,
+    day varchar(20) not null,
+    subject varchar(100) not null,
+    start_time time not null,
+    end_time time not null,
+    created_at timestamp default current_timestamp,
+    check_day varchar(20) check (day in ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота')),
+    constraint check_time check (start_time < end_time)
+);
+drop trigger notify_schedule_change on schedule_change_trigger
+ * from schedule where id = 1
+--функция для присылание уведомлений при изменений таблицы (удаление,обновлений,добовлений)
+create or replace function notify_schedule_change()
+returns trigger 
+language plpgsql
+as $$
+declare
+change_type text;
+schedule_info text;
+begin
+if (tg_op = 'insert') then
+change_type = 'insert';
+schedule_info = format(
+'новая запись в расписании: группа %s, предмет %s, день %s, время %s-%s', 
+new.group_number, 
+new.subject, 
+new.day, 
+new.start_time, 
+new.end_time
+);
+elsif (tg_op = 'update') then
+change_type = 'update';
+schedule_info = format(
+'обновление расписания: группа %s, предмет %s, день %s, время %s-%s', 
+new.group_number, 
+new.subject, 
+new.day, 
+new.start_time, 
+new.end_time
+);
+elsif (tg_op = 'delete') then
+change_type = 'delete';
+schedule_info = format(
+'удаление из расписания: группа %s, предмет %s, день %s, время %s-%s', 
+old.group_number, 
+old.subject, 
+old.day, 
+old.start_time, 
+old.end_time
+);
+end if;
+perform pg_notify('schedule_changes', schedule_info);
+return new;
+end;
+$$;
+
+--триггер связанный с функцией уведомления и отслеживающий изменений
+create trigger schedule_change_trigger
+after insert or update or delete on schedule
+for each row execute function notify_schedule_change();
+--------------------------------------------------------------------------------
+--таблица для хранений информаций от телеграмм бота
+create table  group_subscribers (
+id serial primary key,
+group_number varchar(10) not null,
+chat_id varchar(50) not null,
+subscribed_at timestamp default current_timestamp,
+unique (group_number, chat_id)
+);
+
+select * from group_subscribers
+--------------------------------------------------------------------------------
+--архив для расписания где хранятся удаленные пары
+create table if not exists schedule_archive (
+id serial primary key,
+group_number varchar(10) not null,
+day varchar(20) not null,
+subject varchar(100) not null,
+start_time time not null,
+end_time time not null,
+created_at timestamp default current_timestamp,
+check_day varchar(20)check (day in ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота')),
+constraint check_time check (start_time < end_time)
+);
+
+select * from schedule_ARCHIVE
+
+select id, group_number, day, subject, start_time, end_time, created_at
+from schedule_archive
+order by created_at desc;
+
+select * from schedule where group_number ilike '2301'
+
+create index idx_schedule_group_day on schedule(group_number, day);
+
+truncate table schedule restart identity
+
+--удаление всего всех данных в расписаний
+TRUNCATE TABLE schedule RESTART IDENTITY;
+----------------------------------------------------------------------------------------------
+create table news (
+    id serial primary key,
+    title varchar(255) not null,
+    content text not null,
+    image varchar(255),
+    created_at timestamp without time zone not null default current_timestamp
+);
+
+drop table news
+----------------------------------------------------------------------------------------------
+--пример установления расписания по группам
+insert into schedule (group_number, day, subject, start_time, end_time)
+values
+('2301', 'Понедельник', 'Database', '08:00', '09:30'),
+('2301', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2301', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2301', 'Вторник', 'Physical Education', '08:00', '09:30'),
+('2301', 'Вторник', 'Social Education', '09:50', '11:20'),
+('2301', 'Вторник', 'Programming', '11:30', '13:00'),
+('2301', 'Среда', 'History', '08:00', '09:30'),
+('2301', 'Среда', 'Python', '09:50', '11:20'),
+('2301', 'Среда', 'Database', '11:30', '13:00'),
+('2301', 'Четверг', 'Database', '08:00', '09:30'),
+('2301', 'Четверг', 'ICT', '09:50', '11:20'),
+('2301', 'Четверг', 'Python', '11:30', '13:00'),
+('2301', 'Пятница', 'English', '08:00', '09:30'),
+('2301', 'Пятница', 'Python', '09:50', '11:20'),
+('2301', 'Пятница', 'Economy', '11:30', '13:00');
+
+insert into schedule (group_number, day, subject, start_time, end_time)
+values
+('2302', 'Понедельник', 'Database', '08:00', '09:30'),
+('2302', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2302', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2302', 'Вторник', 'Physical Education', '08:00', '09:30'),
+('2302', 'Вторник', 'Social Education', '09:50', '11:20'),
+('2302', 'Вторник', 'Programming', '11:30', '13:00'),
+('2302', 'Среда', 'History', '08:00', '09:30'),
+('2302', 'Среда', 'Python', '09:50', '11:20'),
+('2302', 'Среда', 'Database', '11:30', '13:00'),
+('2302', 'Четверг', 'Database', '08:00', '09:30'),
+('2302', 'Четверг', 'ICT', '09:50', '11:20'),
+('2302', 'Четверг', 'Python', '11:30', '13:00'),
+('2302', 'Пятница', 'English', '08:00', '09:30'),
+('2302', 'Пятница', 'Python', '09:50', '11:20'),
+('2302', 'Пятница', 'Economy', '11:30', '13:00');
+
+insert into schedule (group_number, day, subject, start_time, end_time)
+values
+('2303', 'Понедельник', 'Database', '08:00', '09:30'),
+('2303', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2303', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2303', 'Вторник', 'Physical Education', '08:00', '09:30'),
+('2303', 'Вторник', 'Social Education', '09:50', '11:20'),
+('2303', 'Вторник', 'Programming', '11:30', '13:00'),
+('2303', 'Среда', 'History', '08:00', '09:30'),
+('2303', 'Среда', 'Python', '09:50', '11:20'),
+('2303', 'Среда', 'Database', '11:30', '13:00'),
+('2303', 'Четверг', 'Database', '08:00', '09:30'),
+('2303', 'Четверг', 'ICT', '09:50', '11:20'),
+('2303', 'Четверг', 'Python', '11:30', '13:00'),
+('2303', 'Пятница', 'English', '08:00', '09:30'),
+('2303', 'Пятница', 'Python', '09:50', '11:20'),
+('2303', 'Пятница', 'Economy', '11:30', '13:00');
+	
+insert into schedule (group_number, day, subject, start_time, end_time)
+values
+('2306', 'Понедельник', 'Database', '08:00', '09:30'),
+('2306', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2306', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2306', 'Вторник', 'Physical Education', '08:00', '09:30'),
+('2306', 'Вторник', 'Social Education', '09:50', '11:20'),
+('2306', 'Вторник', 'Programming', '11:30', '13:00'),
+('2306', 'Среда', 'History', '08:00', '09:30'),
+('2306', 'Среда', 'Python', '09:50', '11:20'),
+('2306', 'Среда', 'Database', '11:30', '13:00'),
+('2306', 'Четверг', 'Database', '08:00', '09:30'),
+('2306', 'Четверг', 'ICT', '09:50', '11:20'),
+('2306', 'Четверг', 'Python', '11:30', '13:00'),
+('2306', 'Пятница', 'English', '08:00', '09:30'),
+('2306', 'Пятница', 'Python', '09:50', '11:20'),
+('2306', 'Пятница', 'Economy', '11:30', '13:00');
+
+insert into schedule (group_number, day, subject, start_time, end_time)
+values
+('2301', 'Понедельник', 'Database', '08:00', '09:30'),
+('2301', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2301', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2301', 'Вторник', 'Mathematics', '08:00', '09:30'),
+('2301', 'Вторник', 'Physics', '09:50', '11:20'),
+('2301', 'Среда', 'English', '08:00', '09:30'),
+('2302', 'Понедельник', 'Database', '08:00', '09:30'),
+('2302', 'Понедельник', 'Chemistry', '09:50', '11:20'),
+('2302', 'Понедельник', 'ICT', '11:30', '13:00'),
+('2302', 'Вторник', 'Mathematics', '08:00', '09:30'),
+('2302', 'Вторник', 'Physics', '09:50', '11:20'),
+('2302', 'Среда', 'English', '08:00', '09:30'),
+('2303', 'Четверг', 'Database', '08:00', '09:30'),
+('2303', 'Четверг', 'Chemistry', '09:50', '11:20'),
+('2303', 'Четверг', 'ICT', '11:30', '13:00'),
+('2303', 'Пятница', 'Mathematics', '08:00', '09:30'),
+('2303', 'Пятница', 'Physics', '09:50', '11:20'),
+('2303', 'Пятница', 'English', '11:30', '13:00');
+
+--распределение на 1 и 2 смену + добовление интервала между ними
+do $$
+begin
+perform insert_group_schedule('2301', '0'::interval);
+perform insert_group_schedule('2302', '0'::interval);
+perform insert_group_schedule('2303', '0'::interval);
+perform insert_group_schedule('2304', '0'::interval);
+perform insert_group_schedule('2305', '0'::interval);
+perform insert_group_schedule('2306', '5 hours 30 minutes'::interval);
+perform insert_group_schedule('2307', '5 hours 30 minutes'::interval);
+perform insert_group_schedule('2308', '5 hours 30 minutes'::interval);
+perform insert_group_schedule('2309', '5 hours 30 minutes'::interval);
+perform insert_group_schedule('2310', '5 hours 30 minutes'::interval);
+end $$;
+
+--функция для добовления уроков группам учитывая смену
+create or replace function insert_group_schedule(group_num varchar(4), time_shift interval)
+returns void 
+language plpgsql
+as $$
+begin
+insert into schedule(group_number, subject, start_time, end_time, day)
+values
+(group_num, 'database', '8:00'::time + time_shift, '9:30'::time + time_shift, 'monday'),
+(group_num, 'chemistry', '9:50'::time + time_shift, '11:20'::time + time_shift, 'monday'),
+(group_num, 'information communication technology', '11:30'::time + time_shift, '13:00'::time + time_shift, 'monday'),
+(group_num, 'english', '8:00'::time + time_shift, '9:30'::time + time_shift, 'friday'),
+(group_num, 'python', '9:50'::time + time_shift, '11:20'::time + time_shift, 'friday'),
+(group_num, 'economy', '11:30'::time + time_shift, '13:00'::time + time_shift, 'friday');
+end;
+$$;
+
+ALTER TABLE users
+ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+
+select * from users;
+
+update users
+set role = 'admin'
+where email = 'asd@gmail.com';

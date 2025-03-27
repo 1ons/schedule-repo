@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body class="bg-gray-900 text-white flex flex-col min-h-screen">
+  <!-- Навигационная панель -->
+  <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+    <div class="flex items-center">
+      <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-xl font-bold">Schedule</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Главная</a>
+      <a href="{{ url_for('profile') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Профиль</a>
+      <a href="{{ url_for('schedule') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Расписание</a>
+      <a href="{{ url_for('news') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Новости</a>
+      <a href="{{ url_for('about') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">О нас</a>
+    </nav>
+  </header>
+
+  <!-- Основное содержимое -->
+  <main class="container mx-auto px-4 py-24 flex-grow">
+    <h1 class="text-3xl font-bold mb-4">Профиль</h1>
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md">
+      <p><strong>Имя:</strong> {{ user.username }}</p>
+      <p>
+        <strong>Email:</strong> {{ user.email }}
+        {% if user.is_verified %}
+          <span class="ml-2 text-green-500">✅ Подтверждено</span>
+        {% else %}
+          <button id="verify-email-btn" class="ml-2 bg-yellow-500 hover:bg-yellow-600 text-black py-1 px-2 rounded text-sm">
+            Подтвердить
+          </button>
+          <span class="ml-2 text-yellow-300">🔔 Почта не подтверждена</span>
+        {% endif %}
+      </p>
+      <p><strong>Роль:</strong> {{ user.role }}</p>
+      <p><strong>Группа:</strong> {{ user.grup }}</p>
+      <p><strong>Дата регистрации:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+
+      <!-- Аватар -->
+      <div class="mt-4">
+        <strong>Аватар:</strong><br>
+        <img src="{{ url_for('static', filename='avatars/' + (user.avatar if user.avatar else 'default-avatar.png')) }}" alt="Avatar" class="w-24 h-24 rounded-full">
+      </div>
+
+      <!-- Форма для загрузки нового аватара -->
+      <form method="POST" enctype="multipart/form-data" class="mt-4">
+        <input type="file" name="avatar" class="bg-gray-700 text-white p-2 rounded">
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mt-2">Загрузить аватар</button>
+      </form>
+
+    {% if session.role == 'admin' %}
+    <div class="mt-10">
+      <h2 class="text-2xl font-bold text-center mb-6">Управление пользователями</h2>
+      <table class="table-auto w-full bg-gray-800 text-white rounded-lg shadow-lg">
+        <thead class="bg-gray-700">
+          <tr>
+            <th class="px-4 py-2 text-center text-lg">Имя пользователя</th>
+            <th class="px-4 py-2 text-center text-lg">Email</th>
+            <th class="px-4 py-2 text-center text-lg">Роль</th>
+            <th class="px-4 py-2 text-center text-lg">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in all_users %}
+          <tr class="border-b border-gray-700 hover:bg-gray-600">
+            <td class="px-4 py-2 text-center">{{ u.username }}</td>
+            <td class="px-4 py-2 text-center">{{ u.email }}</td>
+            <td class="px-4 py-2 text-center">
+              <form action="{{ url_for('change_role', user_id=u.user_id) }}" method="post" class="flex justify-center items-center">
+                <select name="role" class="bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="customer" {% if u.role == 'customer' %}selected{% endif %}>Пользователь</option>
+                  <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Админ</option>
+                </select>
+                <button type="submit" class= 'button lefter'>Сменить роль</button>
+              </form>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <form action="{{ url_for('delete_user', user_id=u.user_id) }}" method="post">
+                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Удалить</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Кнопка выхода снизу -->
+    <div class="mt-6 text-center">
+      <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded">Выйти из профиля</a>
+    </div>
+  </main>
+
+  <!-- Модальное окно подтверждения почты -->
+  <div id="email-verification-modal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Подтверждение Email</h2>
+      <p class="mb-4">Введите 5-значный код, отправленный на {{ user.email }}</p>
+      
+      <div class="verification-input">
+        <input type="text" maxlength="1" pattern="\d" class="verification-code bg-gray-700 rounded">
+        <input type="text" maxlength="1" pattern="\d" class="verification-code bg-gray-700 rounded">
+        <input type="text" maxlength="1" pattern="\d" class="verification-code bg-gray-700 rounded">
+        <input type="text" maxlength="1" pattern="\d" class="verification-code bg-gray-700 rounded">
+        <input type="text" maxlength="1" pattern="\d" class="verification-code bg-gray-700 rounded">
+      </div>
+      
+      <div class="flex justify-between">
+        <button id="resend-code" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded">
+          Отправить код
+        </button>
+        <button id="verify-code" class="bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded">
+          Подтвердить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Футер -->
+  <footer class="bg-gray-800 text-white py-4 text-center mt-6">
+    <div>
+      &copy; 2024. PROMOTEST
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const verifyEmailBtn = document.getElementById('verify-email-btn');
+      const modal = document.getElementById('email-verification-modal');
+      const verificationInputs = document.querySelectorAll('.verification-code');
+
+      // Открытие модального окна
+      verifyEmailBtn.addEventListener('click', function() {
+        modal.style.display = 'flex';
+      });
+
+      // Закрытие модального окна при клике вне его
+      modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Навигация между полями ввода кода
+      verificationInputs.forEach((input, index) => {
+        input.addEventListener('input', function() {
+          if (this.value.length === 1) {
+            if (index < verificationInputs.length - 1) {
+              verificationInputs[index + 1].focus();
+            }
+          }
+        });
+
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && this.value.length === 0) {
+            if (index > 0) {
+              verificationInputs[index - 1].focus();
+            }
+          }
+        });
+      });
+    });
+  </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // ... ваш существующий код ...
+  
+      const resendCodeBtn = document.getElementById('resend-code');
+      const email = "{{ user.email }}"; // Предполагается, что email доступен в шаблоне
+  
+      resendCodeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          fetch('/send_verification_code', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({email: email})
+          })
+          .then(response => response.json())
+          .then(data => {
+              if(data.status === 'success') {
+                  alert('Код подтверждения был отправлен снова.');
+              } else {
+                  alert('Ошибка: ' + data.message);
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Произошла ошибка при отправке запроса.');
+          });
+      });
+  });
+  </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const verifyCodeBtn = document.getElementById('verify-code');
+    const modal = document.getElementById('email-verification-modal');
+    const verificationInputs = document.querySelectorAll('.verification-code');
+    const email = "{{ user.email }}";
+
+    verifyCodeBtn.addEventListener('click', function () {
+        // Собираем код из всех полей ввода
+        const code = Array.from(verificationInputs)
+            .map(input => input.value)
+            .join('');
+
+        fetch('/verify_code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                code: code
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Закрываем модальное окно
+                    modal.style.display = 'none';
+                    // Обновляем страницу для отображения нового статуса
+                    location.reload();
+                } else {
+                    alert(data.message); // Показываем сообщение об ошибке
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при подтверждении.');
+            });
+    });
+});
+
+</script>
+<div id="notifications"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+<div id="notifications-container"></div>
+</body>
+</html>

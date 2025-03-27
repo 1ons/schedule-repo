@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ошибка 404 - Страница не найдена</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col justify-center items-center">
+  <div class="text-center">
+    <h1 class="text-6xl font-extrabold text-red-600 mb-6">404</h1>
+    <h2 class="text-3xl font-semibold mb-4">Страница не найдена</h2>
+    <p class="text-lg mb-6">Извините, но запрашиваемая вами страница не существует.</p>
+    <a href="{{ url_for('home') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300">
+      Вернуться на главную
+    </a>
+  </div>
+</body>
+</html>

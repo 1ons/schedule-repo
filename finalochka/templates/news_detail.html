@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ news.title }} - Schedule</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex-grow: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <!-- Хедер -->
+  <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+    <div class="flex items-center">
+      <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-xl font-bold">Schedule</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Главная</a>
+      <a href="{{ url_for('profile') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Профиль</a>
+      <a href="{{ url_for('schedule') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Расписание</a>
+      <a href="{{ url_for('news') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">Новости</a>
+      <a href="{{ url_for('about') }}" class="px-4 py-2 rounded hover:bg-gray-700 transition duration-300">О нас</a>
+    </nav>
+  </header>
+
+  <!-- Основной контент -->
+  <main class="container mx-auto px-4 pt-24 pb-8">
+    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+      {% if news.image %}
+      <img src="{{ url_for('static', filename='news_images/' + news.image) }}" alt="Изображение новости" class="w-full h-96 object-cover">
+      {% endif %}
+      <div class="p-6">
+        <h1 class="text-4xl font-bold mb-4">{{ news.title }}</h1>
+        <p class="text-gray-300">{{ news.content }}</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Футер -->
+  <footer class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div>
+        &copy; 2024. Schedule
+      </div>
+      <div class="text-right">
+        <div class="font-medium mb-1 px-16">Остались вопросы?</div>
+        <div class="text-gray-300 px-16">GDevs@gmail.com</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

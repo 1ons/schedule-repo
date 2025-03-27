@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule - Главная</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="popup.js"></script>
+</head>
+<body>
+  <!-- Навигационная панель -->
+  <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center shadow-md fixed w-full top-0 z-50">
+    <div class="flex items-center">
+      <!-- Логотип -->
+      <img src="{{ url_for('static', filename='images/button another.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-xl font-bold">Schedule</span>
+    </div>
+    <div class="navbar">
+      <nav>
+        <!-- Навигационные ссылки -->
+        <a href="{{ url_for('home') }}" >Главная</a>
+        <a href="{{ url_for('profile') }}" >Профиль</a>
+        {% if 'user_id' not in session %}
+        <a href="{{ url_for('login') }}" >Вход</a>
+        {% endif %}
+        <a href="{{ url_for('schedule') }}" >Расписание</a>
+        <a href="{{ url_for('news') }}" >Новости</a>
+        <a href="{{ url_for('about') }}">О нас</a>
+      </nav>
+    </div> 
+  </header>
+
+  <!-- Секция 1 -->
+  <section class="hero-section bg-1 flex items-center justify-start text-left pl-20">
+    <div class="max-w-2xl">
+      <h1 class="text-4xl md:text-6xl text-white font-bold mb-6">Учись, изучай, создавай</h1>
+      <p class="text-white text-xl mb-8">Образование начинается здесь</p>
+      <a href="{{ url_for('schedule') }}" class="inline-block bg-yellow-500 text-white px-8 py-4 text-lg rounded-lg hover:bg-yellow-600 transition">Подробнее</a>
+    </div>
+  </section>
+  
+  <!-- Секция 2 - Новости -->
+  <section class="hero-section bg-2 flex flex-col items-start justify-center pl-20">
+    <div class="max-w-2xl text-left">
+      <h1 class="text-4xl md:text-6xl text-white font-bold mb-6">Новости</h1>
+      <p class="text-white text-xl mb-4">Узнайте о последних событиях здесь</p>
+      <!-- Контейнер для динамического вывода новостей -->
+      <section>
+        <ul class="news-container grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for news in latest_news %}
+          <li class="bg-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 flex flex-col">
+            <h2 class="text-2xl font-semibold text-white">{{ news.title }}</h2>
+            <p class="text-sm text-gray-400">{{ news.formatted_date }}</p>
+            <p class="mt-2 text-white flex-grow">{{ news.short_content }}</p>
+            {% if news.image %}
+            <img src="/static/news_images/{{ news.image }}">
+            {% endif %}
+            <a href="{{ url_for('news_detail', news_id=news.id) }}" 
+               class="block mt-4 bg-blue-500 text-white py-2 px-4 rounded text-center hover:bg-blue-600 transition">
+              Читать далее
+            </a>
+          </li>
+          {% else %}
+          <p class="text-center text-white col-span-3">Новостей пока нет.</p>
+          {% endfor %}
+        </ul>
+      </section>      
+      <a href="{{ url_for('news') }}" class="inline-block bg-blue-500 text-white px-8 py-4 text-lg rounded-lg hover:bg-blue-600 transition">
+        Смотреть все новости
+      </a>
+    </div>
+  </section>
+  
+  <!-- Секция 3 -->
+  <section class="hero-section bg-3 flex items-center justify-start text-left pl-20">
+    <div class="max-w-2xl">
+      <h1 class="text-4xl md:text-6xl text-white font-bold mb-6">Чтобы увидеть больше - зарегистрируйтесь</h1>
+      <a href="{{ url_for('login') }}" class="inline-block bg-green-500 text-white px-8 py-4 text-lg rounded-lg hover:bg-green-600 transition">Войти</a>
+    </div>
+  </section>
+  
+  <!-- Футер -->
+  <footer class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div>
+        &copy; 2024. Schedule
+      </div>
+      <div class="text-right">
+        <div class="font-medium mb-1 px-16">Остались вопросы?</div>
+        <div class="text-gray-300 px-16">GDevs@gmail.com</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Стили для фоновых изображений -->
+  <style>
+    .bg-1 {
+      background-image: url("{{ url_for('static', filename='images/cat.GIF') }}");
+    }
+    .bg-2 {
+      background-image: url("{{ url_for('static', filename='images/blackbg2.jpg') }}");
+    }
+    .bg-3 {
+      background-image: url("{{ url_for('static', filename='images/black2.png') }}");
+    }
+
+    .hero-section {
+      height: 100vh; 
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      text-align: left;
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+  
+  <!-- JavaScript для динамического обновления новостей -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    function fetchLatestNews() {
+    $.get("{{ url_for('api_news') }}", function(data) {
+    console.log(data);  // Проверяем, есть ли поле "image"
+    const container = $(".news-container");
+    container.empty();
+    if (data.length) {
+      data.forEach(news => {
+        container.append(`
+          <li class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold">${news.title}</h2>
+            <p class="text-sm text-gray-400">${news.formatted_date}</p>
+            <p class="mt-2">${news.short_content}</p>
+            ${news.image_url ? `<img src="${news.image_url}" class="mt-4 rounded">` : ''}
+            <a href="/news/${news.id}" class="block mt-4 bg-blue-500 text-white py-2 px-4 rounded text-center">Читать далее</a>
+          </li>`);
+      });
+    } else {
+      container.html("<p class='text-center text-gray-300'>Новостей пока нет.</p>");
+    }
+  }).fail(() => console.log("Ошибка загрузки новостей."));
+}
+// Обновляем новости каждые 10 секунд
+setInterval(fetchLatestNews, 10000);
+$(document).ready(fetchLatestNews);
+</script>
+<div id="tg-bot-block">
+  <button id="toggle-btn" class="bg-red-500 text-white px-2 py-1 rounded" onclick="togglePopup()">×</button>
+  <h3>Подпишись<br>для<br>рассылки.</h3>
+  <a href="https://telegram.me/Microchel_not_bot" target="_blank">
+    <img src="{{ url_for('static', filename='images/telegram.png') }}" alt="TG Bot">
+  </a>
+</div>
+<div id="notifications"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+<div id="notifications-container"></div>
+</body>
+</html>
